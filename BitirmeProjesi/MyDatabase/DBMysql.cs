@@ -60,6 +60,7 @@ namespace BitirmeProjesi.MyDatabase
             MySqlCommand commandMysql = connection.CreateCommand();
             commandMysql.CommandText = command;
             return commandMysql.ExecuteReader();
+
         }
         public bool CloseConnection()
         {

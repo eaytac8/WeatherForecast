@@ -16,23 +16,12 @@ namespace BitirmeProjesi.Models
         public string ilAd { get; set; }
 
         public string ilceAd { get; set; }
-
-        public decimal EnyuksekSicaklik { get; set; }
-
-        public decimal EnDusukSicaklik { get; set; }
-
-        public string hadiseKodu { get; set; }
-
-        public DateTime tarih { get; set; }
         
-        public string Resim { get; set; }
-
         public int GunlukIstasyon { get; set; }
 
         public int SonDurumIstasyon { get; set; }
 
         public string SaatlikIstasyon { get; set; }
 
-        public string Aciklama { get; set; }
     }
 }

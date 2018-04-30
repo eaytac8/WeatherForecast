@@ -43,10 +43,10 @@ new SelectListItem { Text = "21:00", Value = "8"},
             @Html.DropDownList("DurumListe", weatherList, "Hava Durumu Seçin", new { @class = "form-control", id = "Durum" })
         </div>
         <div id="gunsecim" class="form-group col-md-3" style="display:none">
-            @Html.DropDownList("GunlukListe", GunlukList, "Gün Seçin", new { @class = "form-control", id="Gun" })
+            @Html.DropDownList("GunlukListe", GunlukList, "Gün Seçin", new { @class = "form-control", id = "Gun" })
         </div>
         <div id="saatsecim" class="form-group col-md-3" style="display:none">
-            @Html.DropDownList("SaatlikListe", SaatlikList, "Saat Seç", new { @class = "form-control", id="Saat"})
+            @Html.DropDownList("SaatlikListe", SaatlikList, "Saat Seç", new { @class = "form-control", id = "Saat" })
         </div>
         <div class='col-sm-3'>
             <div class="form-group">
@@ -68,7 +68,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                 var yyyy = today.getFullYear();
                 var hour = today.getHours();
                 if (hour < 3) {
-                        dd = dd - 1;
+                    dd = dd - 1;
                     if (dd < 10) {
                         dd = '0' + dd
                     }
@@ -83,7 +83,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     mm = '0' + mm
                 }
 
-                today = yyyy+'-'+mm + '-' + dd;
+                today = yyyy + '-' + mm + '-' + dd;
                 $('#datetimepicker1').datetimepicker({
                     format: 'YYYY-MM-DD',
                     minDate: myDate,
@@ -100,6 +100,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
             $("#SecimYap").change(function () {
                 var val = $("#Durum").select().val();
                 if (val == "2") {
+                     $("#_ilListe").hide(300);
                     if (document.getElementById("gunsecim").style.display != "none") {
                         $("#gunsecim").hide(300);
                         $("#saatsecim").show(300);
@@ -108,22 +109,23 @@ new SelectListItem { Text = "21:00", Value = "8"},
                         $("#saatsecim").show(300);
                 }
                 else if (val == "1") {
+                        $("#_ilListe").show(300);
                     if (document.getElementById("saatsecim").style.display != "none") {
                         $("#saatsecim").hide(300);
                         $("#gunsecim").show(300);
                     }
-                    else
+                    else {
                         $("#gunsecim").show(300);
-
+                    }
                 }
                 else if (val == "3" || val == "") {
+                    $("#_ilListe").show(300);
                     if (document.getElementById("saatsecim").style.display != "none") {
                         $("#saatsecim").hide(300);
                     }
                     if (document.getElementById("gunsecim").style.display != "none") {
                         $("#gunsecim").hide(300);
                     }
-
                 }
             })
 
@@ -137,59 +139,79 @@ new SelectListItem { Text = "21:00", Value = "8"},
             <div id="map"></div>
 
             <script>
-                // The following example creates complex markers to indicate beaches near
-                // Sydney, NSW, Australia. Note that the anchor is set to (0,32) to correspond
-                // to the base of the flagpole.
-                
+
                 $("#VeriGonder").click(function (map) {
                     var ilsecilen = document.getElementById("_ilListe");
                     var Myil = ilsecilen.options[ilsecilen.selectedIndex].text;
+                    var SelectedDate = $('#datetimepicker1').data('date');
                     var val = $("#Durum").val();
 
                     if (val == "1") {
                         var gun = $("#Gun").val();
-                        var SelectedDate = $('#datetimepicker1').data('date');
                         console.log("Secilen İl" + Myil + "Durum:" + val + "--Gun:" + gun + "--Tarih:" + SelectedDate);
                         var VeriListe = [Myil, val, gun, SelectedDate];
+
+                        $.ajax({
+                            method: "POST",
+                            url: "/Home/VeriGetir",
+                            data: { veriler: VeriListe },
+                            beforeSend: function () {
+                                console.log("Veriler Gonderildi.");
+                                console.log(VeriListe);
+                            }
+                        }).done(function (d) {
+                            console.log(d);
+                            var Genelilce = [];
+                            if ($("#_ilListe").val() == "") {
+                                console.log("bütün illerin verileri");
+                                for (var i = 0; i < d.length; i++) {
+                                    var deneme = d[i];
+                                    var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik, deneme.Resim];
+                                    Genelilce.push(Dizi);
+                                }
+                                UlkeMap(Genelilce);
+                            }
+                            else {
+                                console.log("ilmap fonksiyonu çağrıldı..");
+                                for (var i = 0; i < d.length; i++) {
+                                    var ilce = d[i];
+                                    var ilceler = [ilce.ilceAd, ilce.lat, ilce.lang, ilce.EnyuksekSicaklik, ilce.EnDusukSicaklik, ilce.Resim];
+                                    Genelilce.push(ilceler);
+                                }
+                                console.log(Genelilce);
+                                ilMap(Genelilce);
+                            }
+                            console.log(Genelilce);
+                        });
                     }
                     else if (val == "2") {
                         var saat = $("#Saat").val();
+
                         console.log("Secilen İl" + Myil + "Durum:" + val + "--Saat:" + saat);
-                        var VeriListe = [Myil, val, saat];
+                        console.log("Secilen tarih:" + SelectedDate);
+                        var VeriListe = [Myil, val, saat, SelectedDate];
+                        $.ajax({
+                            method: "POST",
+                            url: "/Home/VeriGetir",
+                            data: { veriler: VeriListe },
+                            beforeSend: function () {
+                                console.log("Veriler Gonderildi.");
+                                console.log(VeriListe);
+                            }
+                        }).done(function (d) {
+                            console.log(d);
+                            var Genelilce = [];
+                            if ($("#_ilListe").val() == "") {
+                                console.log("bütün illerin verileri");
+                                for (var i = 0; i < d.length; i++) {
+                                    var deneme = d[i];
+                                    var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.HissedilenSicaklik, deneme.Sicaklik, deneme.Resim];
+                                    Genelilce.push(Dizi);
+                                }
+                                UlkeMap(Genelilce);
+                            }
+                        });
                     }
-                    $.ajax({
-                        method: "POST",
-                        url: "/Home/VeriGetir",
-                        data: { veriler: VeriListe },
-                        beforeSend: function () {
-                            console.log("Veriler Gonderildi.");
-                            console.log(VeriListe);
-                        }
-                    }).done(function (d) {
-                        console.log(d);
-                        var Genelilce = [];
-                        if ($("#_ilListe").val() == "") {
-                            console.log("bütün illerin verileri");
-                            for (var i = 0; i < d.length; i++) {
-                                var deneme = d[i];
-                                var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik, deneme.Resim];
-                                Genelilce.push(Dizi);
-                            }
-                            UlkeMap(Genelilce);
-                        }
-                        else {
-                            console.log("ilmap fonksiyonu çağrıldı..");
-                            for (var i = 0; i < d.length; i++) {
-                                var ilce = d[i];
-                                var ilceler = [ilce.ilceAd, ilce.lat, ilce.lang, ilce.EnyuksekSicaklik, ilce.EnDusukSicaklik, ilce.Resim];
-                                Genelilce.push(ilceler);
-                            }
-                            console.log(Genelilce);
-                            ilMap(Genelilce);
-                        }
-                        console.log(Genelilce);
-                    });
-                    
                 });
                 //İl seçilmeden istek yapılırsa bu harita açılacaktır.
                 function UlkeMap(Degerler) {
@@ -198,7 +220,8 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     var merkez = Degerler[0];
                     var map1 = new google.maps.Map(document.getElementById('map'), {
                         zoom: 6,
-                        center: { lat: 39.225533, lng: 34.966287 } 
+                        minZoom: 6,
+                        center: { lat: 39.225533, lng: 34.966287 }
                     });
                     console.log("ilMapiçin haritaya geldi..");
                     setMarkers(map1, Degerler);
@@ -210,6 +233,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     var merkez = Degerler[0];
                     var map1 = new google.maps.Map(document.getElementById('map'), {
                         zoom: 8,
+                        minZoom: 6,
                         center: { lat: merkez[1], lng: merkez[2] }
                     });
                     console.log("ilMapiçin haritaya geldi..");
@@ -219,15 +243,13 @@ new SelectListItem { Text = "21:00", Value = "8"},
                 function initMap() {
                     var map = new google.maps.Map(document.getElementById('map'), {
                         zoom: 6,
+                        minZoom: 6,
                         center: { lat: 39.225533, lng: 34.966287 }
                     });
 
                     GetData(map);
                     //setMarkers(map);
                 }
-                // Data for the markers consisting of a name, a LatLng and a zIndex for the
-                // order in which these markers should display on top of each other.
-
                 function GetData(map) {
                     $.get("/Home/VerileriGetir", function (data) {
                     }).done(function (data) {
@@ -238,10 +260,10 @@ new SelectListItem { Text = "21:00", Value = "8"},
                             Degerler.push(Dizi);
                         }
                         setMarkers(map, Degerler);
-                        
+
                     });
                 }
-                function setMarkers(map,Degerler) {
+                function setMarkers(map, Degerler) {
                     // Adds markers to the map.
 
                     // Marker sizes are expressed as a Size of X,Y where the origin of the image
@@ -255,16 +277,24 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     // Shapes define the clickable region of the icon. The type defines an HTML
                     // <area> element 'poly' which traces out a polygon as a series of X,Y points.
                     // The final coordinate closes the poly by connecting to the first coordinate.
+                    var labelIndex = 0;
                     var shape = {
                         coords: [1, 1, 1, 20, 18, 20, 18, 1],
                         type: 'poly'
                     };
-                        var labelIndex = 0;
                     for (var i = 0; i < Degerler.length; i++) {
                         var beach = Degerler[i];
-                        var labels = beach[3] + " " + beach[4];
+                        var labels = {
+                            text: beach[3] + " " + beach[4],
+                            font: 'Comic-Sans',       //The font family for the label. (e.g. 'Arial')
+                            size: 18,           //The size of the label font in pixels
+                            color: '#ff040a',       //The color of the label. (e.g. 'black' or '#000000')
+                            hover_color: '#851f5e',
+                            anchor: new google.maps.Point(0, 50)
+                        }
+
                         var image = {
-                            url: "/Images/" + beach[5],
+                            url: "/_Images/" + beach[5],
 
                             // This marker is 20 pixels wide by 32 pixels high.
                             size: new google.maps.Size(36, 48),
@@ -278,7 +308,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                             map: map,
                             label: labels,
                             icon: image,
-                            shape: shape,
+                            //shape: shape,
                             title: beach[0],
                             zIndex: beach[3]
                         });

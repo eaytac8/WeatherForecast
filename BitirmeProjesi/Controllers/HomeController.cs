@@ -56,8 +56,8 @@ namespace BitirmeProjesi.Controllers
         {
             DBMysql db = new DBMysql();
 
-            List<model> nesneListem = new List<model>();
-            model md;
+            List<GunlukDurum> nesneListem = new List<GunlukDurum>();
+            GunlukDurum gunlukNesne;
             db.OpenConnection();
             List<SelectListItem> Liste_il = new List<SelectListItem>();
             MySqlDataReader reader = db.CommandReader("select * from CityMasterTable");
@@ -66,21 +66,41 @@ namespace BitirmeProjesi.Controllers
             {
                 if (reader.GetInt32(2) > 0)
                 {
-                    md = new model();
-                    md.lat = reader.GetDouble(4);
-                    md.lang = reader.GetDouble(5);
-                    md.ilAd = reader.GetString(0);
-                    md.GunlukIstasyon = reader.GetInt32(6);
-                    nesneListem.Add(md);
-
-                    //9 en düşük 
-                    //14 en yüksek
-                    //29 hadise
+                    gunlukNesne = new GunlukDurum();
+                    gunlukNesne.lat = reader.GetDouble(4);
+                    gunlukNesne.lang = reader.GetDouble(5);
+                    gunlukNesne.ilAdi = reader.GetString(0);
+                    gunlukNesne.GunlukistNo = reader.GetInt32(6);
+                    nesneListem.Add(gunlukNesne);
                 }
             }
             reader.Close();
-            string date = DateTime.Now.ToString("yyyy-MM-10 02:00:00");
-            string date1 = DateTime.Now.ToString("yyyy-MM-10 04:00:00");
+            int hours = DateTime.Now.Hour;
+            int day = DateTime.Now.Day;
+            string h1 = "";
+            string h2 = "";
+            string dd = "";
+            if (hours < 3 || hours >= 15)
+            {
+                h1 = "14";
+                h2 = "16";
+                day--;
+            }
+            else
+            {
+                h1 = "02";
+                h2 = "04";
+            }
+            if (day < 10)
+            {
+                dd = "0" + day.ToString();
+            }
+            else
+            {
+                dd = day.ToString();
+            }
+            string date = DateTime.Now.ToString($"yyyy-MM-{dd} {h1}:00:00");
+            string date1 = DateTime.Now.ToString($"yyyy-MM-{dd} {h2}:00:00");
 
             reader = db.CommandReader($"SELECT * FROM DailyForecasts WHERE (InsertDate BETWEEN '{date}' AND '{date1}')");
             while (reader.Read())
@@ -88,14 +108,13 @@ namespace BitirmeProjesi.Controllers
 
                 if (Convert.ToInt32(reader.GetInt32(2)) % 100 == 1)
                 {
-                    int index = nesneListem.FindIndex(a => a.GunlukIstasyon == reader.GetInt32(2));
+                    int index = nesneListem.FindIndex(a => a.GunlukistNo == reader.GetInt32(2));
 
                     nesneListem[index].EnDusukSicaklik = reader.GetDecimal(9);
                     nesneListem[index].EnyuksekSicaklik = reader.GetDecimal(14);
                     nesneListem[index].hadiseKodu = reader.GetString(29);
                     nesneListem[index].Resim = reader.GetString(29) + ".png";
                 }
-
             }
 
             return Json(nesneListem, JsonRequestBehavior.AllowGet);
@@ -103,16 +122,19 @@ namespace BitirmeProjesi.Controllers
         public JsonResult VeriGetir(string[] veriler)
         {
             DBMysql db = new DBMysql();
-            List<model> Nesneler = new List<model>();
-            model md;
             db.OpenConnection();
             MySqlDataReader reader;
-            if (veriler[0] != "il Seçin")
+            List<model> Nesneler = new List<model>();
+            model md;
+            if (veriler[0] != "il Seçin" && veriler[1] == "2")
+            {
+                reader = db.CommandReader($"select * from CityMasterTable Where Oncelik='1'");
+            }
+            else if (veriler[0] != "il Seçin")
             {
                 reader = db.CommandReader($"select * from CityMasterTable Where ilAdi='{veriler[0]}'");
             }
-            else
-            {
+            else {
                 reader = db.CommandReader($"select * from CityMasterTable Where Oncelik='1'");
             }
             while (reader.Read())
@@ -141,6 +163,8 @@ namespace BitirmeProjesi.Controllers
             }
             if (veriler[1] == "1")
             {
+                List<GunlukDurum> gunlukNesne = new List<GunlukDurum>();
+                GunlukDurum g_nesne;
                 reader.Close();
                 string date = DateTime.Now.ToString($"{veriler[3]} 02:00:00");
                 string date1 = DateTime.Now.ToString($"{veriler[3]} 04:00:00");
@@ -151,27 +175,98 @@ namespace BitirmeProjesi.Controllers
                     while (reader.Read())
                     {
                         int index = Nesneler.FindIndex(a => a.GunlukIstasyon == reader.GetInt32(2));
-                        Nesneler[index].EnDusukSicaklik = reader.GetDecimal(9 + dayWeather);
-                        Nesneler[index].EnyuksekSicaklik = reader.GetDecimal(14 + dayWeather);
-                        Nesneler[index].hadiseKodu = reader.GetString(29 + dayWeather);
-                        Nesneler[index].Resim = reader.GetString(29 + dayWeather) + ".png";
+                        g_nesne =new GunlukDurum();
+                        
+                            g_nesne.ilAdi = Nesneler[index].ilAd;
+                            g_nesne.lat = Nesneler[index].lat;
+                            g_nesne.lang = Nesneler[index].lang;
+                            g_nesne.ilceAdi = Nesneler[index].ilceAd;
+                            g_nesne.EnDusukSicaklik = reader.GetDecimal(9 + dayWeather);
+                            g_nesne.EnyuksekSicaklik = reader.GetDecimal(14 + dayWeather);
+                            g_nesne.hadiseKodu = reader.GetString(29 + dayWeather);
+                            g_nesne.Resim = reader.GetString(29 + dayWeather) + ".png";
+                            gunlukNesne.Add(g_nesne);
                     }
                 }
                 else
                 {
+                    int indexSayac = 0;
                     reader = db.CommandReader($"SELECT * FROM DailyForecasts WHERE (InsertDate BETWEEN '{date}' AND '{date1}')");
                     while (reader.Read())
                     {
+                           
                         if (Convert.ToInt32(reader.GetInt32(2)) % 100 == 1)
                         {
                             int index = Nesneler.FindIndex(a => a.GunlukIstasyon == reader.GetInt32(2));
-                            Nesneler[index].EnDusukSicaklik = reader.GetDecimal(9 + dayWeather);
-                            Nesneler[index].EnyuksekSicaklik = reader.GetDecimal(14 + dayWeather);
-                            Nesneler[index].hadiseKodu = reader.GetString(29 + dayWeather);
-                            Nesneler[index].Resim = reader.GetString(29 + dayWeather) + ".png";
+                           
+                                g_nesne = new GunlukDurum();
+
+                                g_nesne.ilAdi = Nesneler[index].ilAd;
+                                g_nesne.lat = Nesneler[index].lat;
+                                g_nesne.lang = Nesneler[index].lang;
+                            g_nesne.GunlukistNo = Nesneler[index].GunlukIstasyon;
+                                g_nesne.ilceAdi = Nesneler[index].ilceAd;
+                                g_nesne.EnDusukSicaklik = reader.GetDecimal(9 + dayWeather);
+                                g_nesne.EnyuksekSicaklik = reader.GetDecimal(14 + dayWeather);
+                                g_nesne.hadiseKodu = reader.GetString(29 + dayWeather);
+                                g_nesne.Resim = reader.GetString(29 + dayWeather) + ".png";
+                            if (indexSayac == 0 || gunlukNesne[indexSayac - 1].GunlukistNo != g_nesne.GunlukistNo)
+                            {
+                                gunlukNesne.Add(g_nesne);
+                                indexSayac++;
+                            }
+
                         }
                     }
                 }
+                return Json(gunlukNesne, JsonRequestBehavior.AllowGet);
+            }
+            else if (veriler[1] == "2")
+            {
+                List<SaatlikDurum> saatlikNesne = new List<SaatlikDurum>();
+                SaatlikDurum s_nesne;
+                int DataHours = ((int.Parse(veriler[2])) - 1);
+                int saat = DataHours * 3;
+                string hours = "";
+                if (saat < 10)
+                {
+                    hours = "0" + saat.ToString();
+                }
+                else
+                {
+                    hours = saat.ToString();
+                }
+                reader.Close();
+                string date = DateTime.Now.ToString($"{veriler[3]} {hours}:00:00");
+                int dayWeather = int.Parse(veriler[2]) - 1;
+                int indexSayac_ = 0;
+                reader = db.CommandReader($"SELECT * FROM HourlyForecasts WHERE tarih1='{date}'");
+                while (reader.Read())
+                {
+                    int index = Nesneler.FindIndex(a => a.SaatlikIstasyon == reader.GetString(2));
+                    
+                        s_nesne = new SaatlikDurum();
+                        
+                        s_nesne.ilAdi = Nesneler[index].ilAd;
+                        s_nesne.lat = Nesneler[index].lat;
+                        s_nesne.lang = Nesneler[index].lang;
+                        s_nesne.ilceAdi = Nesneler[index].ilceAd;
+                        s_nesne.SaatlikistNo = Nesneler[index].SaatlikIstasyon;
+                        s_nesne.Hadise = reader.GetString(5 + DataHours * 8);
+                        s_nesne.Sicaklik = reader.GetDecimal(6 + DataHours * 8);
+                        s_nesne.HissedilenSicaklik = reader.GetDecimal(7 + DataHours * 8);
+                        s_nesne.Nem = reader.GetInt32(8 + DataHours * 8);
+                        s_nesne.RuzgarYonu = reader.GetInt32(9 + DataHours * 8);
+                        s_nesne.RuzgarHizi = reader.GetInt32(10 + DataHours * 8);
+                        s_nesne.MaxRuzgarHizi = reader.GetInt32(11 + DataHours * 8);
+                        s_nesne.Resim = reader.GetString(5 + DataHours * 8) + ".png";
+                    if (indexSayac_ == 0 || saatlikNesne[indexSayac_ - 1].SaatlikistNo != s_nesne.SaatlikistNo)
+                    {
+                        saatlikNesne.Add(s_nesne);
+                        indexSayac_++;
+                    }
+                }
+                return Json(saatlikNesne, JsonRequestBehavior.AllowGet);
             }
 
             return Json(Nesneler, JsonRequestBehavior.AllowGet);

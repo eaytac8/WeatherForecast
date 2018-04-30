@@ -169,8 +169,10 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\ilceModel.cs" />
+    <Compile Include="Models\AnlikDurum.cs" />
+    <Compile Include="Models\GunlukDurum.cs" />
     <Compile Include="Models\model.cs" />
+    <Compile Include="Models\SaatlikDurum.cs" />
     <Compile Include="MyDatabase\DBMysql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -313,6 +315,33 @@
     <Content Include="Content\bootstrap\alerts.less" />
     <Content Include="Content\_bootstrap-datetimepicker.less" />
     <Content Include="Content\bootstrap-datetimepicker-build.less" />
+    <Content Include="_Images\A.png" />
+    <Content Include="_Images\AB.png" />
+    <Content Include="_Images\CB.png" />
+    <Content Include="_Images\DMN.png" />
+    <Content Include="_Images\DY.png" />
+    <Content Include="_Images\GKR.png" />
+    <Content Include="_Images\GSY.png" />
+    <Content Include="_Images\HKY.png" />
+    <Content Include="_Images\HSY.png" />
+    <Content Include="_Images\HY.png" />
+    <Content Include="_Images\KF.png" />
+    <Content Include="_Images\KGY.png" />
+    <Content Include="_Images\KKR.png" />
+    <Content Include="_Images\KKY.png" />
+    <Content Include="_Images\KRY.png" />
+    <Content Include="_Images\KSY.png" />
+    <Content Include="_Images\KY.png" />
+    <Content Include="_Images\MSY.png" />
+    <Content Include="_Images\PB.png" />
+    <Content Include="_Images\PUS.png" />
+    <Content Include="_Images\R.png" />
+    <Content Include="_Images\SCK.png" />
+    <Content Include="_Images\SGK.png" />
+    <Content Include="_Images\SIS.png" />
+    <Content Include="_Images\SY.png" />
+    <Content Include="_Images\Y.png" />
+    <Content Include="_Images\YKY.png" />
     <None Include="Scripts\jquery-3.0.0-vsdoc.js" />
     <Content Include="Scripts\jquery-3.0.0.js" />
     <Content Include="Scripts\jquery-3.0.0.min.js" />
