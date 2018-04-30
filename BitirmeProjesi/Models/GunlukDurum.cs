@@ -17,6 +17,10 @@ namespace BitirmeProjesi.Models
         public int oncelik { get; set; }
         public decimal EnyuksekSicaklik { get; set; }
         public decimal EnDusukSicaklik { get; set; }
+        public decimal EnDusukNem { get; set; }
+        public decimal EnYuksekNem { get; set; }
+        public decimal RuzgarHizi { get; set; }
+        public decimal RuzgarYon { get; set; }
         public string hadiseKodu { get; set; }
         public DateTime tarih { get; set; }
         public string Resim { get; set; }

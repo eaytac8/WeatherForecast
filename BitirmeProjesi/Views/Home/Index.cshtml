@@ -13,8 +13,7 @@
         @{
             List<SelectListItem> weatherList = new List<SelectListItem>()
 { new SelectListItem { Text = "Gunluk Hava Durumu", Value ="1"},
-new SelectListItem { Text = "Saatlik Hava Durumu", Value ="2"},
-new SelectListItem { Text = "Anlık Hava Durumu", Value = "3"}
+new SelectListItem { Text = "Saatlik Hava Durumu", Value ="2"}
 };
             List<SelectListItem> GunlukList = new List<SelectListItem>()
 { new SelectListItem { Text = "1.Gün", Value ="1"},
@@ -34,19 +33,20 @@ new SelectListItem { Text = "15:00", Value ="6"},
 new SelectListItem { Text = "18:00", Value ="7"},
 new SelectListItem { Text = "21:00", Value = "8"},
 };
-
+            List<SelectListItem> SondurumList = new List<SelectListItem>();
+            List<SelectListItem> SondurumIlce = new List<SelectListItem>();
         }
         <div class="form-group col-md-2">
             @Html.DropDownList("illiste", (List<SelectListItem>)ViewBag.liste, "il Seçin", new { @class = "form-control", id = "_ilListe" })
         </div>
         <div id="SecimYap" class="form-group col-md-3">
-            @Html.DropDownList("DurumListe", weatherList, "Hava Durumu Seçin", new { @class = "form-control", id = "Durum" })
+            @Html.DropDownList("DurumListe", weatherList, new { @class = "form-control", id = "Durum" })
         </div>
-        <div id="gunsecim" class="form-group col-md-3" style="display:none">
-            @Html.DropDownList("GunlukListe", GunlukList, "Gün Seçin", new { @class = "form-control", id = "Gun" })
+        <div id="gunsecim" class="form-group col-md-3">
+            @Html.DropDownList("GunlukListe", GunlukList, new { @class = "form-control", id = "Gun" })
         </div>
         <div id="saatsecim" class="form-group col-md-3" style="display:none">
-            @Html.DropDownList("SaatlikListe", SaatlikList, "Saat Seç", new { @class = "form-control", id = "Saat" })
+            @Html.DropDownList("SaatlikListe", SaatlikList, new { @class = "form-control", id = "Saat" })
         </div>
         <div class='col-sm-3'>
             <div class="form-group">
@@ -100,7 +100,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
             $("#SecimYap").change(function () {
                 var val = $("#Durum").select().val();
                 if (val == "2") {
-                     $("#_ilListe").hide(300);
+                    $("#sd_saatsecim").hide(300);
                     if (document.getElementById("gunsecim").style.display != "none") {
                         $("#gunsecim").hide(300);
                         $("#saatsecim").show(300);
@@ -109,7 +109,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                         $("#saatsecim").show(300);
                 }
                 else if (val == "1") {
-                        $("#_ilListe").show(300);
+                    $("#sd_saatsecim").hide(300);
                     if (document.getElementById("saatsecim").style.display != "none") {
                         $("#saatsecim").hide(300);
                         $("#gunsecim").show(300);
@@ -118,39 +118,67 @@ new SelectListItem { Text = "21:00", Value = "8"},
                         $("#gunsecim").show(300);
                     }
                 }
-                else if (val == "3" || val == "") {
-                    $("#_ilListe").show(300);
-                    if (document.getElementById("saatsecim").style.display != "none") {
-                        $("#saatsecim").hide(300);
-                    }
-                    if (document.getElementById("gunsecim").style.display != "none") {
-                        $("#gunsecim").hide(300);
-                    }
-                }
             })
 
         });
 
     });
 </script>
-<div class="container-fluid col-xs-offset-1">
+<div class="container-fluid">
     <div class="row">
-        <div class="col-xs-10">
+        <div class="col-xs-9">
             <div id="map"></div>
 
             <script>
+                function GunlukistekSaati() {
+                    document.getElementById('Sondurumsaat').options.length = 0;
+                    var SelectedDate = $('#datetimepicker1').data('date');
+                    var datetime = SelectedDate.split('-');
+                    console.log("gun:" + datetime[2]);
+                    var tarih = new Date();
+                    var gun = tarih.getDate();
+                    var saat = tarih.getHours();
+                    if (gun == datetime[2]) {
+                        console.log("tarihler eşit");
+                        var select = document.getElementById("Sondurumsaat");
+                        for (var i = saat; i >= 0; i--) {
+                            var option = document.createElement('option');
+                            if (i < 10) {
+                                option.text = option.value = "0" + i + ":00";
+                            }
+                            else {
+                                option.text = option.value = i + ":00";
+                            }
+                            select.add(option, 0);
+                        }
+                    }
+                    else {
+                        var select = document.getElementById("Sondurumsaat");
+                        for (var i = 23; i >= 0; i--) {
+                            var option = document.createElement('option');
+                            if (i < 10) {
+                                option.text = option.value = "0" + i + ":00";
+                            }
+                            else {
+                                option.text = option.value = i + ":00";
+                            }
+                            select.add(option, 0);
+                        }
+                    }
+
+                };
 
                 $("#VeriGonder").click(function (map) {
                     var ilsecilen = document.getElementById("_ilListe");
                     var Myil = ilsecilen.options[ilsecilen.selectedIndex].text;
                     var SelectedDate = $('#datetimepicker1').data('date');
                     var val = $("#Durum").val();
-
+                    $("#Uc_gunluk").hide(300);
+                    $("#GunlukSaatlik").hide(300);
+                    $("#sondurumVeriler").hide(300);
                     if (val == "1") {
                         var gun = $("#Gun").val();
-                        console.log("Secilen İl" + Myil + "Durum:" + val + "--Gun:" + gun + "--Tarih:" + SelectedDate);
                         var VeriListe = [Myil, val, gun, SelectedDate];
-
                         $.ajax({
                             method: "POST",
                             url: "/Home/VeriGetir",
@@ -163,32 +191,52 @@ new SelectListItem { Text = "21:00", Value = "8"},
                             console.log(d);
                             var Genelilce = [];
                             if ($("#_ilListe").val() == "") {
-                                console.log("bütün illerin verileri");
                                 for (var i = 0; i < d.length; i++) {
                                     var deneme = d[i];
-                                    var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik, deneme.Resim];
+                                    var Dizi = [deneme.ilAdi, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik, deneme.Resim];
                                     Genelilce.push(Dizi);
                                 }
                                 UlkeMap(Genelilce);
                             }
                             else {
-                                console.log("ilmap fonksiyonu çağrıldı..");
+                                document.getElementById('Sondurumilce').options.length = 0;
+                                var select = document.getElementById("Sondurumilce");
                                 for (var i = 0; i < d.length; i++) {
                                     var ilce = d[i];
-                                    var ilceler = [ilce.ilceAd, ilce.lat, ilce.lang, ilce.EnyuksekSicaklik, ilce.EnDusukSicaklik, ilce.Resim];
+                                    var ilceler = [ilce.ilceAdi, ilce.lat, ilce.lang, ilce.EnyuksekSicaklik, ilce.EnDusukSicaklik, ilce.Resim];
                                     Genelilce.push(ilceler);
+                                    if (ilce.GunlukistNo % 100 == 1 && val == "1") {
+                                        $("#GunlukSaatlik").show(300, function () {
+                                            $("#saatliktablo").hide(300, function () {
+                                                $("#gunluktablo").show(300, function () {
+                                                    $("#hkodu").html(ilce.hadiseKodu);
+                                                    $("#edn").html(ilce.EnDusukNem);
+                                                    $("#eyn").html(ilce.EnYuksekNem);
+                                                    $("#rh").html(ilce.RuzgarHizi);
+                                                    $("#ry").html(ilce.RuzgarYon);
+                                                    $("#eys").html(ilce.EnyuksekSicaklik);
+                                                    $("#eds").html(ilce.EnDusukSicaklik);
+                                                    $("#_ilad").html(ilce.ilAdi);
+                                                });
+                                            });
+                                        });
+                                    }
+                                    var option = document.createElement('option');
+                                    option.text = option.value = ilce.ilceAdi;
+                                    select.add(option, 0);
                                 }
-                                console.log(Genelilce);
                                 ilMap(Genelilce);
+                                $("#Uc_gunluk").show(300, function () {
+                                    $("#laststate").html(Myil.toUpperCase());
+                                    GunlukistekSaati();
+                                });
                             }
                             console.log(Genelilce);
                         });
                     }
                     else if (val == "2") {
-                        var saat = $("#Saat").val();
 
-                        console.log("Secilen İl" + Myil + "Durum:" + val + "--Saat:" + saat);
-                        console.log("Secilen tarih:" + SelectedDate);
+                        var saat = $("#Saat").val();
                         var VeriListe = [Myil, val, saat, SelectedDate];
                         $.ajax({
                             method: "POST",
@@ -201,18 +249,59 @@ new SelectListItem { Text = "21:00", Value = "8"},
                         }).done(function (d) {
                             console.log(d);
                             var Genelilce = [];
-                            if ($("#_ilListe").val() == "") {
-                                console.log("bütün illerin verileri");
-                                for (var i = 0; i < d.length; i++) {
-                                    var deneme = d[i];
-                                    var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.HissedilenSicaklik, deneme.Sicaklik, deneme.Resim];
-                                    Genelilce.push(Dizi);
-                                }
-                                UlkeMap(Genelilce);
+                            console.log("Position index vs..:" + pos);
+                            for (var i = 0; i < d.length; i++) {
+                                var deneme = d[i];
+                                var Dizi = [deneme.ilAdi, deneme.lat, deneme.lang, deneme.HissedilenSicaklik, deneme.Sicaklik, deneme.Resim];
+                                Genelilce.push(Dizi);
                             }
+                            var pos = d.map(function (e) { return e.ilAdi; }).indexOf(Myil);
+                            degerim = d[pos];
+                            UlkeMap(Genelilce);
+                            if ($("#_ilListe").val() != "") {
+                                $("#GunlukSaatlik").show(300, function () {
+                                    $("#gunluktablo").hide(300, function () {
+                                        $("#saatliktablo").show(300, function () {
+                                            $("#saatlik_h").html(degerim.Hadise);
+                                            $("#saatlik_s").html(degerim.Sicaklik);
+                                            $("#saatlik_hs").html(degerim.HissedilenSicaklik);
+                                            $("#saatlik_n").html(degerim.Nem);
+                                            $("#saatlik_rh").html(degerim.RuzgarHizi);
+                                            $("#saatlik_ry").html(degerim.RuzgarYon);
+                                            $("#saatlik_mrh").html(degerim.MaxRuzgarHizi);
+                                            $("#_iladSaat").html(degerim.ilAdi);
+                                        });
+                                    });
+                                });
+                                $("#Uc_gunluk").show(300, function () {
+                                    $("#laststate").html(Myil.toUpperCase());
+                                    GunlukistekSaati();
+                                    document.getElementById('Sondurumilce').options.length = 0;
+                                    $.ajax({
+                                        method: "POST",
+                                        url: "/Home/IlceGetir",
+                                        data: { il_adi: Myil },
+                                        beforeSend: function () {
+                                            console.log("Veriler Gonderildi.");
+                                        }
+                                    }).done(function (d) {
+                                        console.log(d);
+
+                                        var select = document.getElementById("Sondurumilce");
+                                        for (var i = 0; i < d.length; i++) {
+                                            var option = document.createElement('option');
+                                            option.text = option.value = d[i];
+                                            select.add(option, 0);
+                                        }
+
+                                    });
+                                });
+                            }
+
                         });
                     }
                 });
+
                 //İl seçilmeden istek yapılırsa bu harita açılacaktır.
                 function UlkeMap(Degerler) {
                     console.log("Degerler parametresi geldi..");
@@ -226,20 +315,35 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     console.log("ilMapiçin haritaya geldi..");
                     setMarkers(map1, Degerler);
                 }
-                //bir il seçildiğinde o ilin haritası gelecek..
+                //bir il seçildiğinde o ilin haritadaki konumuna odaklanıyor.
                 function ilMap(Degerler) {
-                    console.log("Degerler parametresi geldi..");
-                    console.log(Degerler);
                     var merkez = Degerler[0];
                     var map1 = new google.maps.Map(document.getElementById('map'), {
-                        zoom: 8,
+                        zoom: 9,
                         minZoom: 6,
                         center: { lat: merkez[1], lng: merkez[2] }
                     });
                     console.log("ilMapiçin haritaya geldi..");
                     setMarkers(map1, Degerler);
                 }
-                //Başlangıçta gelecek harita..
+                //Mouse ile haritada tıklanan kordinatların ilçe ve il adlarını getirir.
+                function Konumbul(map) {
+                    var geocoder = new google.maps.Geocoder();
+                    google.maps.event.addListener(map, 'click', function (event) {
+                        geocoder.geocode({
+                            'latLng': event.latLng
+                        }, function (results, status) {
+                            if (status == google.maps.GeocoderStatus.OK) {
+                                if (results[0]) {
+                                    //alert(results[0].address_components[2].long_name + " --- " + results[0].address_components[3].long_name + "    geniş Adres:" + results[0].formatted_address);//formatted_address
+                                    dizi.push(results[0].address_components[2].long_name);
+                                }
+                            }
+                        });
+                    });
+                }
+
+                //Başlangıçta gelen haritada set edilen map objesi..
                 function initMap() {
                     var map = new google.maps.Map(document.getElementById('map'), {
                         zoom: 6,
@@ -248,8 +352,9 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     });
 
                     GetData(map);
-                    //setMarkers(map);
+
                 }
+                //İlk başta yapılan get isteği. İndex sayfası açılırken ilk gelen haritadaki değerler bu fonksiyonla oluşuyor..
                 function GetData(map) {
                     $.get("/Home/VerileriGetir", function (data) {
                     }).done(function (data) {
@@ -263,20 +368,8 @@ new SelectListItem { Text = "21:00", Value = "8"},
 
                     });
                 }
+                //Harita üzerinde eklenen icon, yazı bilgi gibi şeyler burada yapılıyor..
                 function setMarkers(map, Degerler) {
-                    // Adds markers to the map.
-
-                    // Marker sizes are expressed as a Size of X,Y where the origin of the image
-                    // (0,0) is located in the top left of the image.
-
-                    // Origins, anchor positions and coordinates of the marker increase in the X
-                    // direction to the right and in the Y direction down.
-
-                    console.log("SetMaker--");
-
-                    // Shapes define the clickable region of the icon. The type defines an HTML
-                    // <area> element 'poly' which traces out a polygon as a series of X,Y points.
-                    // The final coordinate closes the poly by connecting to the first coordinate.
                     var labelIndex = 0;
                     var shape = {
                         coords: [1, 1, 1, 20, 18, 20, 18, 1],
@@ -288,7 +381,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                             text: beach[3] + " " + beach[4],
                             font: 'Comic-Sans',       //The font family for the label. (e.g. 'Arial')
                             size: 18,           //The size of the label font in pixels
-                            color: '#ff040a',       //The color of the label. (e.g. 'black' or '#000000')
+                            color: '#00040a',       //The color of the label. (e.g. 'black' or '#000000')
                             hover_color: '#851f5e',
                             anchor: new google.maps.Point(0, 50)
                         }
@@ -306,7 +399,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
                         var marker = new google.maps.Marker({
                             position: { lat: beach[1], lng: beach[2] },
                             map: map,
-                            label: labels,
+                            //label: labels,
                             icon: image,
                             //shape: shape,
                             title: beach[0],
@@ -321,7 +414,187 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7RdEt-RwmNpGyyiFQMDRUTCHzEYEvqxc&callback=initMap">
             </script>
         </div>
-    </div><hr />
-</div>
+        <div id="GunlukSaatlik" class="col-xs-3">
+            <div id="gunluktablo" style="display:none">
+                <ul class="list-group">
+                    <li id="_ilad" class="list-group-item active" style="text-align:center">
+                    </li>
+                    <li class="list-group-item">
+                        <i>En Düşük Sicaklik:</i>
+                        <b id="eds"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>En Yüksek Sicaklik:</i>
+                        <b id="eys"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Hadise:</i>
+                        <b id="hkodu"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>En Düşük Nem:</i>
+                        <b id="edn"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>En Yüksek Nem:</i>
+                        <b id="eyn"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Rüzgar Hizi:</i>
+                        <b id="rh"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Rüzgar Yönü:</i>
+                        <b id="ry"></b>
+                    </li>
+                </ul>
+            </div>
+            <div id="saatliktablo" style="display:none">
+                <ul class="list-group">
+                    <li id="_iladSaat" class="list-group-item active" style="text-align:center">
+                    </li>
+                    <li class="list-group-item">
+                        <i>Sicaklik:</i>
+                        <b id="saatlik_s"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Hissedilen Sicaklik:</i>
+                        <b id="saatlik_hs"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Hadise:</i>
+                        <b id="saatlik_h"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Nem:</i>
+                        <b id="saatlik_n"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Rüzgar Yönü:</i>
+                        <b id="saatlik_ry"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i>Rüzgar Hizi:</i>
+                        <b id="saatlik_rh"></b>
+                    </li>
+                    <li class="list-group-item">
+                        <i> Max. Rüzgar Hizi:</i>
+                        <b id="saatlik_mrh"></b>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div> <br />
+<style>
+    li>b {
+        color: #ff0000;
+        font-size: medium;
+        font-style: oblique;
+    }
+</style>
+<div id="Uc_gunluk" class="container-fluid" style="display:none">
+    <div class="row">
+        <ul class="list-group col-xs-8 col-xs-offset-2">
+            <li id="laststate" class="list-group-item active" style="text-align:center">il ADI BURADA</li>
+        </ul>
+        <div id="anliktablo" class="col-xs-8">
+            <ul class="list-group">
+                <li id="laststate" class="list-group-item active" style="text-align:center">Son Durum</li>
+            </ul>
+            <div class="row">
+                <div class="col-xs-4">
+                    @Html.DropDownList("SondurumListe_ilce", SondurumIlce, new { @class = "form-control", id = "Sondurumilce" })
 
+                </div>
+                <div class="col-xs-4">
+                    @Html.DropDownList("SondurumListe", SondurumList, new { @class = "form-control", id = "Sondurumsaat" })
+                </div>
+                <div id="anlikGoster" class="btn btn-success col-xs-2">Göster</div>
+            </div><br />
+            <div id="sondurumVeriler" style="display:none">
+                <ul class="col-xs-6">
+                    <li class="list-group-item"> AktuelBasinc          :<b id="AktuelBasinc"></b></li>
+                    <li class="list-group-item"> DenizSicaklik         :<b id="DenizSicaklik"></b></li>
+                    <li class="list-group-item"> DenizIndirgenmisBasinc:<b id="DenizIndirgenmisBasinc"></b></li>
+                    <li class="list-group-item"> Gorus:                 <b id="Gorus"></b></li>
+                    <li class="list-group-item"> HadiseKodu:            <b id="HadiseKodu"></b></li>
+                    <li class="list-group-item"> Kapalilik:             <b id="Kapalilik"></b></li>
+                    <li class="list-group-item"> KarYukseklik:          <b id="KarYukseklik"></b></li>
+                    <li class="list-group-item"> Nem       :            <b id="Nem"></b></li>
+                    <li class="list-group-item"> RasatMetar:            <b id="RasatMetar"></b></li>
+                    <li class="list-group-item"> RasatSinoptik:         <b id="RasatSinoptik"></b></li>
+                    <li class="list-group-item"> RasatTaf     :         <b id="RasatTaf"></b></li>
+                </ul>
+                <ul class="col-xs-6">
+                    <li class="list-group-item"> RuzgarHizi     :<b id="RuzgarHizi"></b> </li>
+                    <li class="list-group-item"> RuzgarYon      :<b id="RuzgarYon"></b> </li>
+                    <li class="list-group-item"> Sicaklik       :<b id="Sicaklik"></b> </li>
+                    <li class="list-group-item"> VeriZamani     :<b id="VeriZamani"></b> </li>
+                    <li class="list-group-item"> Yagis00now     :<b id="Yagis00now"></b> </li>
+                    <li class="list-group-item"> Yagis10dk      :<b id="Yagis10dk"></b> </li>
+                    <li class="list-group-item"> Yagis12Saat    :<b id="Yagis12Saat"></b> </li>
+                    <li class="list-group-item"> Yagis1Saat     :<b id="Yagis1Saat"></b> </li>
+                    <li class="list-group-item"> Yagis24Saat    :<b id="Yagis24Saat"></b> </li>
+                    <li class="list-group-item"> Yagis6Saat     :<b id="Yagis6Saat"></b> </li>
+                    <li class="list-group-item"> DenizVeriZamani:<b id="DenizVeriZamani"></b></li>
+                </ul>
+            </div>
+        </div>
+        <div id="ucdegertablo" class="col-xs-4">
+            <ul class="list-group">
+                <li id="extreme" class="list-group-item active" style="text-align:center">Uç Değerler</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<script>
+                $(function () {
+                    $("#anlikGoster").click(function () {
+                        var ilsecilen = document.getElementById("_ilListe");
+                        var il = ilsecilen.options[ilsecilen.selectedIndex].text;
+                        var SelectedTime = $('#datetimepicker1').data('date');
+                        var saatsecilen = document.getElementById("Sondurumsaat");
+                        var SelectedHour = saatsecilen.options[saatsecilen.selectedIndex].text;
+                        var ilce = $("#Sondurumilce").val();
+                        var saat = $("#Sondurumsaat").val();
+                        dataList = [il, ilce, SelectedTime, SelectedHour];
+                        $.ajax({
+                            method: "POST",
+                            url: "/Home/SondurumGetir",
+                            data: { dataliste: dataList },
+                            beforeSend: function () {
+                                console.log("Veriler Gonderildi.");
+                            }
+                        }).done(function (d) {
+                            console.log(d);
+                            var ilce = d;
+                            $("#sondurumVeriler").show(300, function () {
+                                $("#AktuelBasinc").html(ilce.AktuelBasinc);
+                                $("#DenizSicaklik").html(ilce.DenizSicaklik);
+                                $("#DenizIndirgenmisBasinc").html(ilce.DenizIndirgenmisBasinc);
+                                $("#Gorus").html(ilce.Gorus);
+                                $("#HadiseKodu").html(ilce.HadiseKodu);
+                                $("#Kapalilik").html(ilce.Kapalilik);
+                                $("#KarYukseklik").html(ilce.KarYukseklik);
+                                $("#Nem").html(ilce.Nem);
+                                $("#RasatMetar").html(ilce.RasatMetar);
+                                $("#RasatSinoptik").html(ilce.RasatSinoptik);
+                                $("#RasatTaf").html(ilce.RasatTaf);
+                                $("#RuzgarHizi").html(ilce.RuzgarHizi);
+                                $("#RuzgarYon").html(ilce.RuzgarYon);
+                                $("#Sicaklik").html(ilce.Sicaklik);
+                                $("#VeriZamani").html(ilce.VeriZamani);
+                                $("#Yagis00now").html(ilce.Yagis00now);
+                                $("#Yagis10dk").html(ilce.Yagis10dk);
+                                $("#Yagis12Saat").html(ilce.Yagis12Saat);
+                                $("#Yagis1Saat").html(ilce.Yagis1Saat);
+                                $("#Yagis24Saat").html(ilce.Yagis24Saat);
+                                $("#Yagis6Saat").html(ilce.Yagis6Saat);
+                                $("#DenizVeriZamani").html(ilce.DenizVeriZamani);
+                            });
+                        });
+                    });
+                });
+</script>
 

@@ -19,7 +19,7 @@ namespace BitirmeProjesi.Models
         public decimal Sicaklik { get; set; }
         public decimal HissedilenSicaklik { get; set; }
         public int Nem { get; set; }
-        public int RuzgarYonu { get; set; }
+        public int RuzgarYon { get; set; }
         public int RuzgarHizi { get; set; }
         public int MaxRuzgarHizi { get; set; }
         public string Resim { get; set; }
