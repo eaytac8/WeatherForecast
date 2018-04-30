@@ -1,0 +1,195 @@
+﻿@using BitirmeProjesi.Models
+@model List<model>
+
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+<hr />
+<div class="container-fluid">
+    <div class="row">
+        @{
+            List<SelectListItem> weatherList = new List<SelectListItem>()
+{ new SelectListItem { Text = "Gunluk Hava Durumu", Value ="1"},
+new SelectListItem { Text = "Saatlik Hava Durumu", Value ="2"},
+new SelectListItem { Text = "Anlık Hava Durumu", Value = "3"}
+};
+            List<SelectListItem> GunlukList = new List<SelectListItem>()
+{ new SelectListItem { Text = "1.Gün", Value ="1"},
+new SelectListItem { Text = "2.Gün", Value ="2"},
+new SelectListItem { Text = "3.Gün", Value = "3"},
+new SelectListItem { Text = "4.Gün", Value ="4"},
+new SelectListItem { Text = "5.Gün", Value = "5"}
+};
+
+            List<SelectListItem> SaatlikList = new List<SelectListItem>()
+{ new SelectListItem { Text = "00:00", Value ="1"},
+new SelectListItem { Text = "03:00", Value ="2"},
+new SelectListItem { Text = "06:00", Value = "3"},
+new SelectListItem { Text = "09:00", Value ="4"},
+new SelectListItem { Text = "12:00", Value = "5"},
+new SelectListItem { Text = "15:00", Value ="6"},
+new SelectListItem { Text = "18:00", Value ="7"},
+new SelectListItem { Text = "21:00", Value = "8"},
+};
+
+        }
+        <div class="form-group col-md-2">
+            @Html.DropDownList("illiste", (List<SelectListItem>)ViewBag.liste, "il Seçin", new { @class = "form-control" })
+        </div>
+        <div id="SecimYap" class="form-group col-md-3">
+            @Html.DropDownList("DurumListe", weatherList, "Hava Durumu Seçin", new { @class = "form-control", id = "Durum" })
+        </div>
+        <div id="gunsecim" class="form-group col-md-3" style="display:none">
+            @Html.DropDownList("GunlukListe", GunlukList, "Gün Seçin", new { @class = "form-control" })
+        </div>
+        <div id="saatsecim" class="form-group col-md-3" style="display:none">
+            @Html.DropDownList("SaatlikListe", SaatlikList, "Saat Seç", new { @class = "form-control" })
+        </div>
+        <div class='col-sm-3'>
+            <div class="form-group">
+                <div class='input-group date' id='datetimepicker1'>
+                    <input type='text' class="form-control" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="btn btn-success col-md-1">Görüntüle</div>
+        <script type="text/javascript">
+            $(function () {
+                $('#datetimepicker1').datetimepicker();
+                startDate: '-3d'
+            });
+        </script>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $("#SecimYap").click(function () {
+            $("#SecimYap").change(function () {
+                var val = $("#Durum").select().val();
+                console.log(val + "---sdada");
+                if (val == "2") {
+                    if (document.getElementById("gunsecim").style.display != "none") {
+                        $("#gunsecim").hide(300);
+                        $("#saatsecim").show(300);
+                    }
+                    else
+                        $("#saatsecim").show(300);
+                }
+                else if (val == "1") {
+                    if (document.getElementById("saatsecim").style.display != "none") {
+                        $("#saatsecim").hide(300);
+                        $("#gunsecim").show(300);
+                    }
+                    else
+                        $("#gunsecim").show(300);
+
+                }
+                else if (val == "3" || val == "") {
+                    if (document.getElementById("saatsecim").style.display != "none") {
+                        $("#saatsecim").hide(300);
+                    }
+                    if (document.getElementById("gunsecim").style.display != "none") {
+                        $("#gunsecim").hide(300);
+                    }
+
+                }
+            })
+
+        });
+
+    });
+</script>
+<div class="container-fluid col-xs-offset-1">
+    <div class="row">
+        <div class="col-xs-10">
+            <div id="map"></div>
+
+            <script>
+                // The following example creates complex markers to indicate beaches near
+                // Sydney, NSW, Australia. Note that the anchor is set to (0,32) to correspond
+                // to the base of the flagpole.
+
+                function initMap() {
+                    var map = new google.maps.Map(document.getElementById('map'), {
+                        zoom: 6,
+                        center: { lat: 39.225533, lng: 34.966287 }
+                    });
+
+                    GetData(map);
+                    //setMarkers(map);
+                }
+                // Data for the markers consisting of a name, a LatLng and a zIndex for the
+                // order in which these markers should display on top of each other.
+
+                function GetData(map) {
+                    $.get("/Home/VerileriGetir", function (data) {
+                    }).done(function (data) {
+                        var Degerler = [];
+                        for (var i = 0; i < data.length; i++) {
+                            var deneme = data[i];
+                            var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik];
+                            Degerler.push(Dizi);
+                        }
+                        console.log(Degerler);
+                       
+                        setMarkers(map);
+                        function setMarkers(map) {
+                            // Adds markers to the map.
+
+                            // Marker sizes are expressed as a Size of X,Y where the origin of the image
+                            // (0,0) is located in the top left of the image.
+
+                            // Origins, anchor positions and coordinates of the marker increase in the X
+                            // direction to the right and in the Y direction down.
+                            console.log("SetMaker--");
+                            var image = {
+                                url: "/Images/G.png",
+
+                                // This marker is 20 pixels wide by 32 pixels high.
+                                size: new google.maps.Size(30, 40),
+                                // The origin for this image is (0, 0).
+                                origin: new google.maps.Point(0,0),
+                                // The anchor for this image is the base of the flagpole at (0, 32).
+                                anchor: new google.maps.Point(0, 0)
+                            };
+                            // Shapes define the clickable region of the icon. The type defines an HTML
+                            // <area> element 'poly' which traces out a polygon as a series of X,Y points.
+                            // The final coordinate closes the poly by connecting to the first coordinate.
+                            var shape = {
+                                coords: [1, 1, 1, 20, 18, 20, 18, 1],
+                                type: 'poly'
+                            };
+                            for (var i = 0; i < Degerler.length; i++) {
+                                var beach = Degerler[i];
+                                var marker = new google.maps.Marker({
+                                    position: { lat: beach[1], lng: beach[2] },
+                                    map: map,
+                                    icon: image,
+                                    shape: shape,
+                                    title: beach[0],
+                                    zIndex: beach[3]
+                                });
+                                console.log("sdasda");
+                            }
+                        }
+
+                    });
+                }
+
+            </script>
+
+            <script async defer
+                    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7RdEt-RwmNpGyyiFQMDRUTCHzEYEvqxc&callback=initMap">
+            </script>
+        </div>
+    </div><hr />
+</div>
+
+
