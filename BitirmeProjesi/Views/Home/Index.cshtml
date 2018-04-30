@@ -37,16 +37,16 @@ new SelectListItem { Text = "21:00", Value = "8"},
 
         }
         <div class="form-group col-md-2">
-            @Html.DropDownList("illiste", (List<SelectListItem>)ViewBag.liste, "il Seçin", new { @class = "form-control" })
+            @Html.DropDownList("illiste", (List<SelectListItem>)ViewBag.liste, "il Seçin", new { @class = "form-control", id = "_ilListe" })
         </div>
         <div id="SecimYap" class="form-group col-md-3">
             @Html.DropDownList("DurumListe", weatherList, "Hava Durumu Seçin", new { @class = "form-control", id = "Durum" })
         </div>
         <div id="gunsecim" class="form-group col-md-3" style="display:none">
-            @Html.DropDownList("GunlukListe", GunlukList, "Gün Seçin", new { @class = "form-control" })
+            @Html.DropDownList("GunlukListe", GunlukList, "Gün Seçin", new { @class = "form-control", id="Gun" })
         </div>
         <div id="saatsecim" class="form-group col-md-3" style="display:none">
-            @Html.DropDownList("SaatlikListe", SaatlikList, "Saat Seç", new { @class = "form-control" })
+            @Html.DropDownList("SaatlikListe", SaatlikList, "Saat Seç", new { @class = "form-control", id="Saat"})
         </div>
         <div class='col-sm-3'>
             <div class="form-group">
@@ -58,11 +58,37 @@ new SelectListItem { Text = "21:00", Value = "8"},
                 </div>
             </div>
         </div>
-        <div class="btn btn-success col-md-1">Görüntüle</div>
+        <div id="VeriGonder" class="btn btn-success col-md-1">Görüntüle</div>
         <script type="text/javascript">
             $(function () {
-                $('#datetimepicker1').datetimepicker();
-                startDate: '-3d'
+                var myDate = new Date(2018, 01, 16);
+                var today = new Date();
+                var dd = today.getDate();
+                var mm = today.getMonth() + 1; //January is 0!
+                var yyyy = today.getFullYear();
+                var hour = today.getHours();
+                if (hour < 3) {
+                        dd = dd - 1;
+                    if (dd < 10) {
+                        dd = '0' + dd
+                    }
+                }
+                else {
+                    if (dd < 10) {
+                        dd = '0' + dd
+                    }
+                }
+
+                if (mm < 10) {
+                    mm = '0' + mm
+                }
+
+                today = yyyy+'-'+mm + '-' + dd;
+                $('#datetimepicker1').datetimepicker({
+                    format: 'YYYY-MM-DD',
+                    minDate: myDate,
+                    maxDate: today
+                });
             });
         </script>
     </div>
@@ -73,7 +99,6 @@ new SelectListItem { Text = "21:00", Value = "8"},
         $("#SecimYap").click(function () {
             $("#SecimYap").change(function () {
                 var val = $("#Durum").select().val();
-                console.log(val + "---sdada");
                 if (val == "2") {
                     if (document.getElementById("gunsecim").style.display != "none") {
                         $("#gunsecim").hide(300);
@@ -115,7 +140,82 @@ new SelectListItem { Text = "21:00", Value = "8"},
                 // The following example creates complex markers to indicate beaches near
                 // Sydney, NSW, Australia. Note that the anchor is set to (0,32) to correspond
                 // to the base of the flagpole.
+                
+                $("#VeriGonder").click(function (map) {
+                    var ilsecilen = document.getElementById("_ilListe");
+                    var Myil = ilsecilen.options[ilsecilen.selectedIndex].text;
+                    var val = $("#Durum").val();
 
+                    if (val == "1") {
+                        var gun = $("#Gun").val();
+                        var SelectedDate = $('#datetimepicker1').data('date');
+                        console.log("Secilen İl" + Myil + "Durum:" + val + "--Gun:" + gun + "--Tarih:" + SelectedDate);
+                        var VeriListe = [Myil, val, gun, SelectedDate];
+                    }
+                    else if (val == "2") {
+                        var saat = $("#Saat").val();
+                        console.log("Secilen İl" + Myil + "Durum:" + val + "--Saat:" + saat);
+                        var VeriListe = [Myil, val, saat];
+                    }
+                    $.ajax({
+                        method: "POST",
+                        url: "/Home/VeriGetir",
+                        data: { veriler: VeriListe },
+                        beforeSend: function () {
+                            console.log("Veriler Gonderildi.");
+                            console.log(VeriListe);
+                        }
+                    }).done(function (d) {
+                        console.log(d);
+                        var Genelilce = [];
+                        if ($("#_ilListe").val() == "") {
+                            console.log("bütün illerin verileri");
+                            for (var i = 0; i < d.length; i++) {
+                                var deneme = d[i];
+                                var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik, deneme.Resim];
+                                Genelilce.push(Dizi);
+                            }
+                            UlkeMap(Genelilce);
+                        }
+                        else {
+                            console.log("ilmap fonksiyonu çağrıldı..");
+                            for (var i = 0; i < d.length; i++) {
+                                var ilce = d[i];
+                                var ilceler = [ilce.ilceAd, ilce.lat, ilce.lang, ilce.EnyuksekSicaklik, ilce.EnDusukSicaklik, ilce.Resim];
+                                Genelilce.push(ilceler);
+                            }
+                            console.log(Genelilce);
+                            ilMap(Genelilce);
+                        }
+                        console.log(Genelilce);
+                    });
+                    
+                });
+                //İl seçilmeden istek yapılırsa bu harita açılacaktır.
+                function UlkeMap(Degerler) {
+                    console.log("Degerler parametresi geldi..");
+                    console.log(Degerler);
+                    var merkez = Degerler[0];
+                    var map1 = new google.maps.Map(document.getElementById('map'), {
+                        zoom: 6,
+                        center: { lat: 39.225533, lng: 34.966287 } 
+                    });
+                    console.log("ilMapiçin haritaya geldi..");
+                    setMarkers(map1, Degerler);
+                }
+                //bir il seçildiğinde o ilin haritası gelecek..
+                function ilMap(Degerler) {
+                    console.log("Degerler parametresi geldi..");
+                    console.log(Degerler);
+                    var merkez = Degerler[0];
+                    var map1 = new google.maps.Map(document.getElementById('map'), {
+                        zoom: 8,
+                        center: { lat: merkez[1], lng: merkez[2] }
+                    });
+                    console.log("ilMapiçin haritaya geldi..");
+                    setMarkers(map1, Degerler);
+                }
+                //Başlangıçta gelecek harita..
                 function initMap() {
                     var map = new google.maps.Map(document.getElementById('map'), {
                         zoom: 6,
@@ -134,55 +234,57 @@ new SelectListItem { Text = "21:00", Value = "8"},
                         var Degerler = [];
                         for (var i = 0; i < data.length; i++) {
                             var deneme = data[i];
-                            var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik];
+                            var Dizi = [deneme.ilAd, deneme.lat, deneme.lang, deneme.EnyuksekSicaklik, deneme.EnDusukSicaklik, deneme.Resim];
                             Degerler.push(Dizi);
                         }
-                        console.log(Degerler);
-                       
-                        setMarkers(map);
-                        function setMarkers(map) {
-                            // Adds markers to the map.
-
-                            // Marker sizes are expressed as a Size of X,Y where the origin of the image
-                            // (0,0) is located in the top left of the image.
-
-                            // Origins, anchor positions and coordinates of the marker increase in the X
-                            // direction to the right and in the Y direction down.
-                            console.log("SetMaker--");
-                            var image = {
-                                url: "/Images/G.png",
-
-                                // This marker is 20 pixels wide by 32 pixels high.
-                                size: new google.maps.Size(30, 40),
-                                // The origin for this image is (0, 0).
-                                origin: new google.maps.Point(0,0),
-                                // The anchor for this image is the base of the flagpole at (0, 32).
-                                anchor: new google.maps.Point(0, 0)
-                            };
-                            // Shapes define the clickable region of the icon. The type defines an HTML
-                            // <area> element 'poly' which traces out a polygon as a series of X,Y points.
-                            // The final coordinate closes the poly by connecting to the first coordinate.
-                            var shape = {
-                                coords: [1, 1, 1, 20, 18, 20, 18, 1],
-                                type: 'poly'
-                            };
-                            for (var i = 0; i < Degerler.length; i++) {
-                                var beach = Degerler[i];
-                                var marker = new google.maps.Marker({
-                                    position: { lat: beach[1], lng: beach[2] },
-                                    map: map,
-                                    icon: image,
-                                    shape: shape,
-                                    title: beach[0],
-                                    zIndex: beach[3]
-                                });
-                                console.log("sdasda");
-                            }
-                        }
-
+                        setMarkers(map, Degerler);
+                        
                     });
                 }
+                function setMarkers(map,Degerler) {
+                    // Adds markers to the map.
 
+                    // Marker sizes are expressed as a Size of X,Y where the origin of the image
+                    // (0,0) is located in the top left of the image.
+
+                    // Origins, anchor positions and coordinates of the marker increase in the X
+                    // direction to the right and in the Y direction down.
+
+                    console.log("SetMaker--");
+
+                    // Shapes define the clickable region of the icon. The type defines an HTML
+                    // <area> element 'poly' which traces out a polygon as a series of X,Y points.
+                    // The final coordinate closes the poly by connecting to the first coordinate.
+                    var shape = {
+                        coords: [1, 1, 1, 20, 18, 20, 18, 1],
+                        type: 'poly'
+                    };
+                        var labelIndex = 0;
+                    for (var i = 0; i < Degerler.length; i++) {
+                        var beach = Degerler[i];
+                        var labels = beach[3] + " " + beach[4];
+                        var image = {
+                            url: "/Images/" + beach[5],
+
+                            // This marker is 20 pixels wide by 32 pixels high.
+                            size: new google.maps.Size(36, 48),
+                            // The origin for this image is (0, 0).
+                            origin: new google.maps.Point(0, 0),
+                            // The anchor for this image is the base of the flagpole at (0, 32).
+                            anchor: new google.maps.Point(0, 0)
+                        };
+                        var marker = new google.maps.Marker({
+                            position: { lat: beach[1], lng: beach[2] },
+                            map: map,
+                            label: labels,
+                            icon: image,
+                            shape: shape,
+                            title: beach[0],
+                            zIndex: beach[3]
+                        });
+                        console.log("sdasda");
+                    }
+                }
             </script>
 
             <script async defer

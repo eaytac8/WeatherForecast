@@ -169,6 +169,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\ilceModel.cs" />
     <Compile Include="Models\model.cs" />
     <Compile Include="MyDatabase\DBMysql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -204,14 +205,33 @@
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <Content Include="Content\bootstrap.css.map" />
     <Content Include="Content\bootstrap-theme.css.map" />
-    <Content Include="Images\B.png" />
-    <Content Include="Images\G.png" />
-    <Content Include="Images\PB.png" />
-    <Content Include="Images\PBSY.png" />
-    <Content Include="Images\SY.png" />
+    <Content Include="Images\A.png" />
+    <Content Include="Images\AB.png" />
+    <Content Include="Images\SGK.png" />
+    <Content Include="Images\CB.png" />
+    <Content Include="Images\DMN.png" />
+    <Content Include="Images\DY.png" />
+    <Content Include="Images\GKR.png" />
     <Content Include="Images\GSY.png" />
-    <Content Include="Images\KarYagmur.png" />
+    <Content Include="Images\SCK.png" />
+    <Content Include="Images\HKY.png" />
+    <Content Include="Images\HSY.png" />
+    <Content Include="Images\HY.png" />
+    <Content Include="Images\KF.png" />
+    <Content Include="Images\KGY.png" />
+    <Content Include="Images\KKR.png" />
+    <Content Include="Images\KKY.png" />
+    <Content Include="Images\KRY.png" />
+    <Content Include="Images\KSY.png" />
     <Content Include="Images\KY.png" />
+    <Content Include="Images\PUS.png" />
+    <Content Include="Images\PB.png" />
+    <Content Include="Images\R.png" />
+    <Content Include="Images\SIS.png" />
+    <Content Include="Images\SY.png" />
+    <Content Include="Images\Y.png" />
+    <Content Include="Images\YKY.png" />
+    <Content Include="Images\MSY.png" />
     <Content Include="Scripts\bootstrap-datetimepicker.js" />
     <Content Include="Scripts\bootstrap-datetimepicker.min.js" />
     <Content Include="Scripts\bootstrap.js" />
