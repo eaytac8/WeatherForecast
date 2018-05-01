@@ -11,14 +11,7 @@ namespace BitirmeProjesi.Controllers
 {
     public class HomeController : Controller
     {
-
-
-        // GET: Home
-        public ActionResult Anasayfa()
-        {
-
-            return View();
-        }
+        // GET: Home   
         public ActionResult Index()
         {
             DBMysql db = new DBMysql();
@@ -76,9 +69,24 @@ namespace BitirmeProjesi.Controllers
             reader.Close();
             int hours = DateTime.Now.Hour;
             int day = DateTime.Now.Day;
+            int month = DateTime.Now.Month;
             string h1 = "";
             string h2 = "";
+            string month_ = "";
             string dd = "";
+            if (day == 1 && hours < 3)
+            {
+                month--;
+                day = 30;
+            }
+            if (month < 10)
+            {
+                month_ = "0" + month.ToString();
+            }
+            else
+            {
+                month_ = month.ToString();
+            }
             if (hours < 3 || hours >= 15)
             {
                 h1 = "14";
@@ -98,8 +106,8 @@ namespace BitirmeProjesi.Controllers
             {
                 dd = day.ToString();
             }
-            string date = DateTime.Now.ToString($"yyyy-MM-{dd} {h1}:00:00");
-            string date1 = DateTime.Now.ToString($"yyyy-MM-{dd} {h2}:00:00");
+            string date = DateTime.Now.ToString($"yyyy-{month_}-{dd} {h1}:00:00");
+            string date1 = DateTime.Now.ToString($"yyyy-{month_}-{dd} {h2}:00:00");
 
             reader = db.CommandReader($"SELECT * FROM DailyForecasts WHERE (InsertDate BETWEEN '{date}' AND '{date1}')");
             while (reader.Read())
@@ -328,30 +336,112 @@ namespace BitirmeProjesi.Controllers
             MySqlDataReader reader = db.CommandReader($"select * from LastStateActual WHERE ilAdi='{dataliste[0]}' AND ilceAdi='{dataliste[1]}' AND InsertDate='{dataReq}'");
             while (reader.Read())
             {
-                anlikNesne.AktuelBasinc = reader.GetDecimal(4);  
-                anlikNesne.DenizSicaklik = reader.GetDecimal(5);    
-                anlikNesne.DenizIndirgenmisBasinc = reader.GetDecimal(6); 
-                anlikNesne.Gorus = reader.GetDecimal(7); 
+                anlikNesne.AktuelBasinc = reader.GetDecimal(4);
+                anlikNesne.DenizSicaklik = reader.GetDecimal(5);
+                anlikNesne.DenizIndirgenmisBasinc = reader.GetDecimal(6);
+                anlikNesne.Gorus = reader.GetDecimal(7);
                 anlikNesne.HadiseKodu = reader.GetString(8);
                 anlikNesne.Kapalilik = reader.GetInt32(9);
-                anlikNesne.KarYukseklik = reader.GetDecimal(10); 
+                anlikNesne.KarYukseklik = reader.GetDecimal(10);
                 anlikNesne.Nem = reader.GetDecimal(11);
                 anlikNesne.RasatMetar = reader.GetString(12);
                 anlikNesne.RasatSinoptik = reader.GetString(13);
                 anlikNesne.RasatTaf = reader.GetString(14);
                 anlikNesne.RuzgarHizi = reader.GetDecimal(15);
-                anlikNesne.RuzgarYon  = reader.GetDecimal(16);
+                anlikNesne.RuzgarYon = reader.GetDecimal(16);
                 anlikNesne.Sicaklik = reader.GetDecimal(17);
-                anlikNesne.VeriZamani = reader.GetDateTime(18);
+                anlikNesne.VeriZamani = reader.GetDateTime(18).ToString("yyyy-MM-dd HH:mm");
                 anlikNesne.Yagis00now = reader.GetDecimal(19);
-                anlikNesne.Yagis10dk  = reader.GetDecimal(20);
-                anlikNesne.Yagis12Saat= reader.GetDecimal(21);
+                anlikNesne.Yagis10dk = reader.GetDecimal(20);
+                anlikNesne.Yagis12Saat = reader.GetDecimal(21);
                 anlikNesne.Yagis1Saat = reader.GetDecimal(22);
-                anlikNesne.Yagis24Saat= reader.GetDecimal(23);
-                anlikNesne.Yagis6Saat = reader.GetDecimal(24);   
-                anlikNesne.DenizVeriZamani = reader.GetDateTime(25);
+                anlikNesne.Yagis24Saat = reader.GetDecimal(23);
+                anlikNesne.Yagis6Saat = reader.GetDecimal(24);
+                anlikNesne.DenizVeriZamani = reader.GetDateTime(25).ToString("yyyy-MM-dd HH:mm");
             }
+            db.CloseConnection();
             return Json(anlikNesne, JsonRequestBehavior.AllowGet);
+        }
+        public JsonResult GunlukdurumGetir(string[] dataliste)
+        {
+            GunlukDurum gunlukNesne = new GunlukDurum();
+            DBMysql db = new DBMysql();
+            db.OpenConnection();
+            MySqlDataReader reader;
+            int hours = DateTime.Now.Hour;
+            int day = DateTime.Now.Day;
+            int month = DateTime.Now.Month;
+            string h1 = "";
+            string h2 = "";
+            string month_ = "";
+            string dd = "";
+            if (day == 1 && hours < 3)
+            {
+                month--;
+                day = 30;
+            }
+            if (month < 10)
+            {
+                month_ = "0" + month.ToString();
+            }
+            else
+            {
+                month_ = month.ToString();
+            }
+            if (hours < 3 || hours >= 15)
+            {
+                h1 = "14";
+                h2 = "16";
+                day--;
+            }
+            else
+            {
+                h1 = "02";
+                h2 = "04";
+            }
+            if (day < 10)
+            {
+                dd = "0" + day.ToString();
+            }
+            else
+            {
+                dd = day.ToString();
+            }
+            string date = DateTime.Now.ToString($"yyyy-{month_}-{dd} {h1}:00:00");
+            string date1 = DateTime.Now.ToString($"yyyy-{month_}-{dd} {h2}:00:00");
+            int dayWeather = Int32.Parse(dataliste[3]) - 1;
+            reader = db.CommandReader($"SELECT * FROM DailyForecasts WHERE ilAdi='{dataliste[0]}' AND ilceAdi='{dataliste[1]}' AND (InsertDate BETWEEN '{date}' AND '{date1}')");
+            while (reader.Read())
+            {
+                gunlukNesne.EnDusukSicaklik = reader.GetDecimal(9 + dayWeather);
+                gunlukNesne.EnyuksekSicaklik = reader.GetDecimal(14 + dayWeather);
+                gunlukNesne.hadiseKodu = reader.GetString(29 + dayWeather);
+                gunlukNesne.EnDusukNem = reader.GetDecimal(19 + dayWeather);
+                gunlukNesne.EnYuksekNem = reader.GetDecimal(24 + dayWeather);
+                gunlukNesne.RuzgarHizi = reader.GetDecimal(34 + dayWeather);
+                gunlukNesne.RuzgarYon = reader.GetDecimal(39 + dayWeather);
+            }
+            db.CloseConnection();
+            return Json(gunlukNesne, JsonRequestBehavior.AllowGet);
+        }
+        public JsonResult UcDegerGetir(string[] dataliste)
+        {
+            Ucdegerler nesne = new Ucdegerler();
+            DBMysql db = new DBMysql();
+            db.OpenConnection();
+            MySqlDataReader reader;
+            string dataReq = DateTime.Now.ToString($"{dataliste[1]} 23:44:59");
+            reader = db.CommandReader($"select * from ExtremeValues WHERE ilAd='{dataliste[0]}' AND InsertDate='{dataReq}'");
+            while (reader.Read())
+            {
+                nesne.max = reader.GetDecimal(6);
+                nesne.maxort= reader.GetDecimal(7);
+                nesne.min   = reader.GetDecimal(8);
+                nesne.minort= reader.GetDecimal(9);
+                nesne.ort = reader.GetDecimal(10);
+            }
+            db.CloseConnection();
+            return Json(nesne, JsonRequestBehavior.AllowGet);
         }
     }
 }

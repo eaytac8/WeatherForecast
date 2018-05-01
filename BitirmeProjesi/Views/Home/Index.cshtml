@@ -35,6 +35,7 @@ new SelectListItem { Text = "21:00", Value = "8"},
 };
             List<SelectListItem> SondurumList = new List<SelectListItem>();
             List<SelectListItem> SondurumIlce = new List<SelectListItem>();
+            List<SelectListItem> GunlukdurumIlce = new List<SelectListItem>();
         }
         <div class="form-group col-md-2">
             @Html.DropDownList("illiste", (List<SelectListItem>)ViewBag.liste, "il Seçin", new { @class = "form-control", id = "_ilListe" })
@@ -68,7 +69,13 @@ new SelectListItem { Text = "21:00", Value = "8"},
                 var yyyy = today.getFullYear();
                 var hour = today.getHours();
                 if (hour < 3) {
-                    dd = dd - 1;
+                    if (dd != 1) {
+                        dd = dd - 1;
+                    }
+                    else {
+                        mm = mm - 1;
+                        dd = 30;
+                    }
                     if (dd < 10) {
                         dd = '0' + dd
                     }
@@ -130,6 +137,30 @@ new SelectListItem { Text = "21:00", Value = "8"},
             <div id="map"></div>
 
             <script>
+                function Ucdegerler() {
+                    var ilsecilen = document.getElementById("_ilListe");
+                    var il = ilsecilen.options[ilsecilen.selectedIndex].text;
+                    var SelectedTime = $('#datetimepicker1').data('date');
+                    dataList = [il, SelectedTime];
+                    $.ajax({
+                        method: "POST",
+                        url: "/Home/UcDegerGetir",
+                        data: { dataliste: dataList },
+                        beforeSend: function () {
+                            console.log("Veriler Gonderildi.");
+                        }
+                    }).done(function (d) {
+                        console.log(d);
+                        var il = d;
+                        $("#Ucmax").html(il.max);
+                        $("#Ucmaxort").html(il.maxort);
+                        $("#Ucmin").html(il.min);
+                        $("#Ucminort").html(il.minort);
+                        $("#Ucort").html(il.ort);
+                    }).fail(function () {
+                        console.log("Uc deger için istek yapılırken hata oluştu..");
+                    });
+                }
                 function GunlukistekSaati() {
                     document.getElementById('Sondurumsaat').options.length = 0;
                     var SelectedDate = $('#datetimepicker1').data('date');
@@ -169,6 +200,23 @@ new SelectListItem { Text = "21:00", Value = "8"},
                 };
 
                 $("#VeriGonder").click(function (map) {
+                    var SelectedDate = $('#datetimepicker1').data('date');
+                    var datetime = SelectedDate.split('-');
+                    var tarih = new Date();
+                    var gun = tarih.getDate();
+                    var saat = tarih.getHours();
+                    if (gun == datetime[2]) {
+                        console.log("tarihler eşit");
+                        $("#UchataGoster").show(300);
+                        $("#UcGoster").hide(300);
+                    }
+                    else {
+                        $("#UcGoster").show(300, Ucdegerler);
+                        $("#UchataGoster").hide(300);
+                    }
+                    $("#Sondurumnot").hide(300);
+                    $("#st_hadise").hide(300);
+                    $("#gd_hadise").hide(300);
                     var ilsecilen = document.getElementById("_ilListe");
                     var Myil = ilsecilen.options[ilsecilen.selectedIndex].text;
                     var SelectedDate = $('#datetimepicker1').data('date');
@@ -201,11 +249,16 @@ new SelectListItem { Text = "21:00", Value = "8"},
                             else {
                                 document.getElementById('Sondurumilce').options.length = 0;
                                 var select = document.getElementById("Sondurumilce");
+                                document.getElementById('Gunlukdurumilce').options.length = 0;
+                                var select1 = document.getElementById("Gunlukdurumilce");
+                                var merkezK;
                                 for (var i = 0; i < d.length; i++) {
                                     var ilce = d[i];
                                     var ilceler = [ilce.ilceAdi, ilce.lat, ilce.lang, ilce.EnyuksekSicaklik, ilce.EnDusukSicaklik, ilce.Resim];
                                     Genelilce.push(ilceler);
+
                                     if (ilce.GunlukistNo % 100 == 1 && val == "1") {
+                                        merkezK = [ilce.lat, ilce.lang];
                                         $("#GunlukSaatlik").show(300, function () {
                                             $("#saatliktablo").hide(300, function () {
                                                 $("#gunluktablo").show(300, function () {
@@ -224,8 +277,12 @@ new SelectListItem { Text = "21:00", Value = "8"},
                                     var option = document.createElement('option');
                                     option.text = option.value = ilce.ilceAdi;
                                     select.add(option, 0);
+                                    var option1 = document.createElement('option');
+                                    option1.text = option1.value = ilce.ilceAdi;
+                                    select1.add(option1, 0);
                                 }
-                                ilMap(Genelilce);
+                                console.log("Merkez Kordinatlar:" + merkezK[0]);
+                                ilMap(Genelilce, merkezK);
                                 $("#Uc_gunluk").show(300, function () {
                                     $("#laststate").html(Myil.toUpperCase());
                                     GunlukistekSaati();
@@ -316,12 +373,12 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     setMarkers(map1, Degerler);
                 }
                 //bir il seçildiğinde o ilin haritadaki konumuna odaklanıyor.
-                function ilMap(Degerler) {
-                    var merkez = Degerler[0];
+                function ilMap(Degerler, MerkezK) {
+                    console.log(MerkezK);
                     var map1 = new google.maps.Map(document.getElementById('map'), {
-                        zoom: 9,
+                        zoom: 8,
                         minZoom: 6,
-                        center: { lat: merkez[1], lng: merkez[2] }
+                        center: { lat: MerkezK[0], lng: MerkezK[1] }
                     });
                     console.log("ilMapiçin haritaya geldi..");
                     setMarkers(map1, Degerler);
@@ -414,42 +471,78 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7RdEt-RwmNpGyyiFQMDRUTCHzEYEvqxc&callback=initMap">
             </script>
         </div>
+        <style>
+            .ayrintiGoster {
+                font-size: medium;
+                text-align: center;
+                font-weight: 600;
+                color: brown;
+                background: #93cbb1;
+                display: none
+            }
+
+            .ayrinti {
+                color: blue;
+                font-size: small;
+                text-align: right;
+                float: right;
+            }
+        </style>
         <div id="GunlukSaatlik" class="col-xs-3">
             <div id="gunluktablo" style="display:none">
-                <ul class="list-group">
-                    <li id="_ilad" class="list-group-item active" style="text-align:center">
-                    </li>
-                    <li class="list-group-item">
-                        <i>En Düşük Sicaklik:</i>
-                        <b id="eds"></b>
-                    </li>
-                    <li class="list-group-item">
-                        <i>En Yüksek Sicaklik:</i>
-                        <b id="eys"></b>
-                    </li>
-                    <li class="list-group-item">
-                        <i>Hadise:</i>
-                        <b id="hkodu"></b>
-                    </li>
-                    <li class="list-group-item">
-                        <i>En Düşük Nem:</i>
-                        <b id="edn"></b>
-                    </li>
-                    <li class="list-group-item">
-                        <i>En Yüksek Nem:</i>
-                        <b id="eyn"></b>
-                    </li>
-                    <li class="list-group-item">
-                        <i>Rüzgar Hizi:</i>
-                        <b id="rh"></b>
-                    </li>
-                    <li class="list-group-item">
-                        <i>Rüzgar Yönü:</i>
-                        <b id="ry"></b>
-                    </li>
-                </ul>
+                <div class="row">
+                    <div class="alert alert-warning" style="text-align:center;font-weight:600;color:blue"> GÜNLÜK DURUM</div>
+                </div>
+                <div class="row">
+                    <div id="_gunlukilce" class="col-xs-8">
+                        @Html.DropDownList("GunlukdurumListe_ilce", GunlukdurumIlce, new { @class = "form-control", id = "Gunlukdurumilce" })
+                    </div>
+                    <div id="gunlukgoster" class="btn btn-success col-xs-4">
+                        Göster
+                    </div>
+                </div><br />
+                <div class="row">
+                    <ul class="list-group">
+                        <li id="_ilad" class="list-group-item active" style="text-align:center">
+                        </li>
+                        <li class="list-group-item">
+                            <i>En Düşük Sicaklik:</i>
+                            <b id="eds"></b>
+                        </li>
+                        <li class="list-group-item">
+                            <i>En Yüksek Sicaklik:</i>
+                            <b id="eys"></b>
+                        </li>
+                        <li class="list-group-item">
+                            <i>Hadise:</i>
+                            <b id="hkodu"></b>
+                            <b id="gd_ayrinti" class="col-xs-4" style="color: blue;font-size: small;text-align: right;float: right;">Ayrıntı..</b>
+                        </li>
+                        <li id="gd_hadise" class="list-group-item alert alert-warning" style="font-size: medium;text-align: center;font-weight: 600;color: brown;background: #93cbb1;display: none">
+                        </li>
+                        <li class="list-group-item">
+                            <i>En Düşük Nem:</i>
+                            <b id="edn"></b>
+                        </li>
+                        <li class="list-group-item">
+                            <i>En Yüksek Nem:</i>
+                            <b id="eyn"></b>
+                        </li>
+                        <li class="list-group-item">
+                            <i>Rüzgar Hizi:</i>
+                            <b id="rh"></b>
+                        </li>
+                        <li class="list-group-item">
+                            <i>Rüzgar Yönü:</i>
+                            <b id="ry"></b>
+                        </li>
+                    </ul>
+                </div>
             </div>
             <div id="saatliktablo" style="display:none">
+                <div class="row">
+                    <div class="alert alert-warning" style="text-align:center;font-weight:600;color:blue"> SAATLİK DURUM</div>
+                </div>
                 <ul class="list-group">
                     <li id="_iladSaat" class="list-group-item active" style="text-align:center">
                     </li>
@@ -464,6 +557,9 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     <li class="list-group-item">
                         <i>Hadise:</i>
                         <b id="saatlik_h"></b>
+                        <b id="st_ayrinti" class="col-xs-4" style="color: blue;font-size: small;text-align: right;float: right;">Ayrıntı..</b>
+                    </li>
+                    <li id="st_hadise" class="list-group-item alert alert-warning" style="font-size: medium;text-align: center;font-weight: 600;color: brown;background: #93cbb1;display: none">
                     </li>
                     <li class="list-group-item">
                         <i>Nem:</i>
@@ -485,9 +581,10 @@ new SelectListItem { Text = "21:00", Value = "8"},
             </div>
         </div>
     </div>
-</div> <br />
+</div>
+<br />
 <style>
-    li>b {
+    li > b {
         color: #ff0000;
         font-size: medium;
         font-style: oblique;
@@ -495,14 +592,13 @@ new SelectListItem { Text = "21:00", Value = "8"},
 </style>
 <div id="Uc_gunluk" class="container-fluid" style="display:none">
     <div class="row">
-        <ul class="list-group col-xs-8 col-xs-offset-2">
-            <li id="laststate" class="list-group-item active" style="text-align:center">il ADI BURADA</li>
-        </ul>
+        <div id="laststate" class="alert alert-warning col-xs-6 col-xs-offset-3" style="font-size:large;text-align:center;font-weight:600;"></div>
         <div id="anliktablo" class="col-xs-8">
             <ul class="list-group">
                 <li id="laststate" class="list-group-item active" style="text-align:center">Son Durum</li>
             </ul>
             <div class="row">
+                <div id="Sondurumnot" class="alert alert-danger col-xs-10 col-xs-offset-1" style="font-size:small;text-align:center;font-weight:600;display:none">Not: "-9999" ölçülmeyen değer için kullanılıyor..</div>
                 <div class="col-xs-4">
                     @Html.DropDownList("SondurumListe_ilce", SondurumIlce, new { @class = "form-control", id = "Sondurumilce" })
 
@@ -518,7 +614,8 @@ new SelectListItem { Text = "21:00", Value = "8"},
                     <li class="list-group-item"> DenizSicaklik         :<b id="DenizSicaklik"></b></li>
                     <li class="list-group-item"> DenizIndirgenmisBasinc:<b id="DenizIndirgenmisBasinc"></b></li>
                     <li class="list-group-item"> Gorus:                 <b id="Gorus"></b></li>
-                    <li class="list-group-item"> HadiseKodu:            <b id="HadiseKodu"></b></li>
+                    <li class="list-group-item"> HadiseKodu:            <b id="HadiseKodu"></b><b id="sd_ayrinti" class="col-xs-4" style="color:blue;font-size:small;text-align:right;float:right">Ayrıntı..</b></li>
+                    <li id="sd_hadise" class="list-group-item alert alert-warning" style="font-size:medium;text-align:center;font-weight:600;color:brown;display:none;background:#93cbb1"></li>
                     <li class="list-group-item"> Kapalilik:             <b id="Kapalilik"></b></li>
                     <li class="list-group-item"> KarYukseklik:          <b id="KarYukseklik"></b></li>
                     <li class="list-group-item"> Nem       :            <b id="Nem"></b></li>
@@ -542,59 +639,210 @@ new SelectListItem { Text = "21:00", Value = "8"},
             </div>
         </div>
         <div id="ucdegertablo" class="col-xs-4">
-            <ul class="list-group">
+            <ul>
                 <li id="extreme" class="list-group-item active" style="text-align:center">Uç Değerler</li>
             </ul>
+            <div id="UcGoster" class="col-xs-offset-1" style="display:none">
+                <ul class="list-group">
+                    <li class="list-group-item" style="background:#3dc3a2">Maximum Sicaklik: <b id="Ucmax" style="color:green;font-weight:600;"></b></li>
+                    <li class="list-group-item" style="background:#3dc3a2">Maximum Ortalama Sicaklik: <b id="Ucmaxort" style="color:green;font-weight:600;"></b></li>
+                    <li class="list-group-item" style="background:#3dc3a2">Minimum Sicaklik: <b id="Ucmin" style="color:green;font-weight:600;"></b></li>
+                    <li class="list-group-item" style="background:#3dc3a2">Maximum Ortalama Sicaklik: <b id="Ucminort" style="color:green;font-weight:600;"></b></li>
+                    <li class="list-group-item" style="background:#3dc3a2">Ortalama Sicaklik: <b id="Ucort" style="color:green;font-weight:600;"></b></li>
+                </ul>
+            </div>
+            <div id="UchataGoster" class="alert alert-warning col-xs-offset-2" style="font-size:large;font-weight:600;text-align:center;color:brown;display:none">Henüz Bugün için Uç Değer Tablosu oluşturulmadı. Bugün için Uç Değer Tablosu 23:45'te Oluşturulacaktır..</div>
         </div>
     </div>
 </div>
 <script>
-                $(function () {
-                    $("#anlikGoster").click(function () {
-                        var ilsecilen = document.getElementById("_ilListe");
-                        var il = ilsecilen.options[ilsecilen.selectedIndex].text;
-                        var SelectedTime = $('#datetimepicker1').data('date');
-                        var saatsecilen = document.getElementById("Sondurumsaat");
-                        var SelectedHour = saatsecilen.options[saatsecilen.selectedIndex].text;
-                        var ilce = $("#Sondurumilce").val();
-                        var saat = $("#Sondurumsaat").val();
-                        dataList = [il, ilce, SelectedTime, SelectedHour];
-                        $.ajax({
-                            method: "POST",
-                            url: "/Home/SondurumGetir",
-                            data: { dataliste: dataList },
-                            beforeSend: function () {
-                                console.log("Veriler Gonderildi.");
-                            }
-                        }).done(function (d) {
-                            console.log(d);
-                            var ilce = d;
-                            $("#sondurumVeriler").show(300, function () {
-                                $("#AktuelBasinc").html(ilce.AktuelBasinc);
-                                $("#DenizSicaklik").html(ilce.DenizSicaklik);
-                                $("#DenizIndirgenmisBasinc").html(ilce.DenizIndirgenmisBasinc);
-                                $("#Gorus").html(ilce.Gorus);
-                                $("#HadiseKodu").html(ilce.HadiseKodu);
-                                $("#Kapalilik").html(ilce.Kapalilik);
-                                $("#KarYukseklik").html(ilce.KarYukseklik);
-                                $("#Nem").html(ilce.Nem);
-                                $("#RasatMetar").html(ilce.RasatMetar);
-                                $("#RasatSinoptik").html(ilce.RasatSinoptik);
-                                $("#RasatTaf").html(ilce.RasatTaf);
-                                $("#RuzgarHizi").html(ilce.RuzgarHizi);
-                                $("#RuzgarYon").html(ilce.RuzgarYon);
-                                $("#Sicaklik").html(ilce.Sicaklik);
-                                $("#VeriZamani").html(ilce.VeriZamani);
-                                $("#Yagis00now").html(ilce.Yagis00now);
-                                $("#Yagis10dk").html(ilce.Yagis10dk);
-                                $("#Yagis12Saat").html(ilce.Yagis12Saat);
-                                $("#Yagis1Saat").html(ilce.Yagis1Saat);
-                                $("#Yagis24Saat").html(ilce.Yagis24Saat);
-                                $("#Yagis6Saat").html(ilce.Yagis6Saat);
-                                $("#DenizVeriZamani").html(ilce.DenizVeriZamani);
-                            });
-                        });
-                    });
+    $(function () {
+        $("#anlikGoster").click(function () {
+            $("#sd_hadise").hide(300);
+            var ilsecilen = document.getElementById("_ilListe");
+            var il = ilsecilen.options[ilsecilen.selectedIndex].text;
+            var SelectedTime = $('#datetimepicker1').data('date');
+            var saatsecilen = document.getElementById("Sondurumsaat");
+            var SelectedHour = saatsecilen.options[saatsecilen.selectedIndex].text;
+            var ilce = $("#Sondurumilce").val();
+            var saat = $("#Sondurumsaat").val();
+            dataList = [il, ilce, SelectedTime, SelectedHour];
+            $.ajax({
+                method: "POST",
+                url: "/Home/SondurumGetir",
+                data: { dataliste: dataList },
+                beforeSend: function () {
+                    console.log("Veriler Gonderildi.");
+                }
+            }).done(function (d) {
+                console.log(d);
+                var ilce = d;
+                $("#sondurumVeriler").show(300, function () {
+                    $("#Sondurumnot").show(300);
+                    $("#AktuelBasinc").html(ilce.AktuelBasinc);
+                    $("#DenizSicaklik").html(ilce.DenizSicaklik);
+                    $("#DenizIndirgenmisBasinc").html(ilce.DenizIndirgenmisBasinc);
+                    $("#Gorus").html(ilce.Gorus);
+                    $("#HadiseKodu").html(ilce.HadiseKodu);
+                    $("#Kapalilik").html(ilce.Kapalilik);
+                    $("#KarYukseklik").html(ilce.KarYukseklik);
+                    $("#Nem").html(ilce.Nem);
+                    $("#RasatMetar").html(ilce.RasatMetar);
+                    $("#RasatSinoptik").html(ilce.RasatSinoptik);
+                    $("#RasatTaf").html(ilce.RasatTaf);
+                    $("#RuzgarHizi").html(ilce.RuzgarHizi);
+                    $("#RuzgarYon").html(ilce.RuzgarYon);
+                    $("#Sicaklik").html(ilce.Sicaklik);
+                    $("#VeriZamani").html(ilce.VeriZamani);
+                    $("#Yagis00now").html(ilce.Yagis00now);
+                    $("#Yagis10dk").html(ilce.Yagis10dk);
+                    $("#Yagis12Saat").html(ilce.Yagis12Saat);
+                    $("#Yagis1Saat").html(ilce.Yagis1Saat);
+                    $("#Yagis24Saat").html(ilce.Yagis24Saat);
+                    $("#Yagis6Saat").html(ilce.Yagis6Saat);
+                    $("#DenizVeriZamani").html(ilce.DenizVeriZamani);
                 });
+            });
+        });
+        $("#sd_ayrinti").click(function () {
+            var kod = $("#HadiseKodu").html();
+            $("#sd_hadise").show(300, function () {
+                $("#sd_hadise").html(kodCoz(kod));
+            });
+        });
+        $("#gd_ayrinti").click(function () {
+            var kod = $("#hkodu").html();
+            $("#gd_hadise").show(300, function () {
+                $("#gd_hadise").html(kodCoz(kod));
+            });
+        });
+        $("#st_ayrinti").click(function () {
+            var kod = $("#saatlik_h").html();
+            $("#st_hadise").show(300, function () {
+                $("#st_hadise").html(kodCoz(kod));
+            });
+        });
+        $("#gunlukgoster").click(function () {
+            $("#gd_hadise").hide(10);
+            var ilsecilen = document.getElementById("_ilListe");
+            var il = ilsecilen.options[ilsecilen.selectedIndex].text;
+            var SelectedTime = $('#datetimepicker1').data('date');
+            var Secilenilce = $("#Gunlukdurumilce").val();
+            var kacgun = $("#Gun").val();
+            dataList = [il, Secilenilce, SelectedTime, kacgun];
+            $.ajax({
+                method: "POST",
+                url: "/Home/GunlukdurumGetir",
+                data: { dataliste: dataList },
+                beforeSend: function () {
+                    console.log("Veriler Gonderildi.");
+                }
+            }).done(function (d) {
+                console.log(d);
+                var ilce = d;
+                $("#eys").html(ilce.EnyuksekSicaklik);
+                $("#eds").html(ilce.EnDusukSicaklik);
+                $("#hkodu").html(ilce.hadiseKodu);
+                $("#edn").html(ilce.EnDusukNem);
+                $("#eyn").html(ilce.EnYuksekNem);
+                $("#rh").html(ilce.RuzgarHizi);
+                $("#ry").html(ilce.RuzgarYon);
+                $("#_ilad").html(Secilenilce);
+            }).fail(function () {
+                console.log("Günlük durum isteklerinde hata bulunmaktadır..");
+            });
+        });
+
+        function kodCoz(kod) {
+            var kodDeger;
+            switch (kod) {
+                case "A":
+                    kodDeger = "Açık";
+                    break;
+                case "AB":
+                    kodDeger = "Az Bulutlu";
+                    break;
+                case "CB":
+                    kodDeger = "Çok Bulutlu";
+                    break;
+                case "DMN":
+                    kodDeger = "Duman";
+                    break;
+                case "DY":
+                    kodDeger = "Dolu Yağışı";
+                    break;
+                case "GKR":
+                    kodDeger = "Güneyli Kuvvetli Rüzgar";
+                    break;
+                case "GSY":
+                    kodDeger = "Gökgürültülü Sağanak Yağış";
+                    break;
+                case "HKY":
+                    kodDeger = "Hafif Kar Yağışı";
+                    break;
+                case "HSY":
+                    kodDeger = "Hafif Sağanak Yağış";
+                    break;
+                case "HY":
+                    kodDeger = "Hafif Yağmurlu";
+                    break;
+                case "KF":
+                    kodDeger = "Kum Fırtınası";
+                    break;
+                case "KGY":
+                    kodDeger = "Kuvvetli Gökgürültülü Yağış";
+                    break;
+                case "KKR":
+                    kodDeger = "Kuzeyli Kuvvetli Rüzgar";
+                    break;
+                case "KKY":
+                    kodDeger = "Karla Karışık Yağmur";
+                    break;
+                case "KRY":
+                    kodDeger = "Kar Yağışı";
+                    break;
+                case "KSY":
+                    kodDeger = "Kuvvetli Sağanak Yağış";
+                    break;
+                case "KY":
+                    kodDeger = "Kuvvetli Yağmurlu";
+                    break;
+                case "MSY":
+                    kodDeger = "Yer Yer Sağanak Yağışlı";
+                    break;
+                case "PB":
+                    kodDeger = "Parçalı Bulutlu";
+                    break;
+                case "PUS":
+                    kodDeger = "Pus";
+                    break;
+                case "R":
+                    kodDeger = "Rüzgarlı";
+                    break;
+                case "SCK":
+                    kodDeger = "Sıcak";
+                    break;
+                case "SGK":
+                    kodDeger = "Soğuk";
+                    break;
+                case "SIS":
+                    kodDeger = "Sis";
+                    break;
+                case "SY":
+                    kodDeger = "Sağanak Yağışlı";
+                    break;
+                case "Y":
+                    kodDeger = "Yağmurlu";
+                    break;
+                case "YKY":
+                    kodDeger = "Yoğun Kar Yağışlı";
+                    break;
+                default:
+                    kodDeger = "Hadise Belirtilmemiş..";
+                    break;
+            }
+            return kodDeger;
+        }
+    });
 </script>
 

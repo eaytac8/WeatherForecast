@@ -28,14 +28,14 @@ namespace BitirmeProjesi.Models
         public decimal RuzgarHizi { get; set; }
         public decimal RuzgarYon { get; set; }
         public decimal Sicaklik { get; set; }
-        public DateTime VeriZamani { get; set; }
+        public string VeriZamani { get; set; }
         public decimal Yagis00now { get; set; }
         public decimal Yagis10dk { get; set; }
         public decimal Yagis12Saat { get; set; }
         public decimal Yagis1Saat { get; set; }
         public decimal Yagis24Saat { get; set; }
         public decimal Yagis6Saat { get; set; }
-        public DateTime DenizVeriZamani { get; set; }
+        public string DenizVeriZamani { get; set; }
 
     }
 }

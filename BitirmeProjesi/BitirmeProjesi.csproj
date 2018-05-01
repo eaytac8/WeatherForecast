@@ -173,6 +173,7 @@
     <Compile Include="Models\GunlukDurum.cs" />
     <Compile Include="Models\model.cs" />
     <Compile Include="Models\SaatlikDurum.cs" />
+    <Compile Include="Models\Ucdegerler.cs" />
     <Compile Include="MyDatabase\DBMysql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -370,7 +371,6 @@
       <DependentUpon>Web.config</DependentUpon>
     </Content>
     <Content Include="Views\Web.config" />
-    <Content Include="Views\Home\Anasayfa.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
